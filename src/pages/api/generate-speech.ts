@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import axios, { AxiosError } from 'axios'
+import axios from 'axios'
 
 interface GenerateSpeechRequest {
   topic: string
@@ -101,18 +101,19 @@ export default async function handler(
       speech,
       translation: translation || undefined,
     })
-  } catch (error) {
-    if (error instanceof AxiosError) {
-      console.error('API Error:', error.response?.data || error)
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err)) {
+      console.error('API Error:', err.response?.data || err)
       res.status(500).json({
         message: '生成演讲稿时出错',
-        error: error.response?.data || error.message,
+        error: err.response?.data?.toString() || err.message
       })
     } else {
+      const error = err as Error
       console.error('Unexpected error:', error)
       res.status(500).json({
         message: '生成演讲稿时出错',
-        error: 'An unexpected error occurred',
+        error: error.message || '未知错误'
       })
     }
   }
