@@ -67,31 +67,34 @@ export default function Home() {
     return colors[index]
   }
 
-  // 获取有道词典翻译
-  const getYoudaoTranslation = async (text: string, from: string): Promise<TranslationResult> => {
-    try {
-      const response = await fetch('/api/translate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text,
-          from,
-        }),
-      })
-      
-      if (!response.ok) {
-        throw new Error('Translation request failed')
-      }
-      
-      const data = await response.json()
-      return data
-    } catch (error) {
-      console.error('翻译请求失败:', error)
-      throw error
+// 获取有道词典翻译
+const getYoudaoTranslation = async (text: string, from: string): Promise<TranslationResult> => {
+  try {
+    console.log('开始翻译:', { text, from }) // 添加日志
+
+    const response = await fetch('/api/translate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text,
+        from,
+      }),
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
+    
+    const data = await response.json()
+    console.log('翻译结果:', data) // 添加日志
+    return data
+  } catch (error) {
+    console.error('翻译请求失败:', error)
+    throw error
   }
+}
 
   // 文本朗读控制
   const toggleSpeak = () => {
