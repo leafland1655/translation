@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-import CryptoJS from 'crypto-js'
 
 interface Word {
   word: string
@@ -28,7 +27,6 @@ export default function Home() {
   const [selectedWords, setSelectedWords] = useState<Word[]>([])
   const [highlightedWords, setHighlightedWords] = useState<Set<string>>(new Set())
   const [isPlaying, setIsPlaying] = useState(false)
-  const [selectionStart, setSelectionStart] = useState<number | null>(null)
   const speechRef = useRef<SpeechSynthesisUtterance | null>(null)
 
   // 语言检测函数
@@ -223,116 +221,117 @@ export default function Home() {
   }
 
   // 导出为 PDF
-const exportToPDF = async () => {
-  try {
-    const content = document.getElementById('exportContent')
-    if (!content) return
+  const exportToPDF = async () => {
+    try {
+      const content = document.getElementById('exportContent')
+      if (!content) return
 
-    // 保存原始滚动位置和样式
-    const leftContent = content.querySelector('.left-content-scroll') as HTMLElement
-    const rightContent = content.querySelector('.right-content-scroll') as HTMLElement
-    const originalLeftScroll = leftContent?.scrollTop
-    const originalRightScroll = rightContent?.scrollTop
-    const originalStyles = {
-      left: leftContent?.style.cssText,
-      right: rightContent?.style.cssText,
-      content: content.style.cssText
-    }
-
-    // 临时隐藏不需要的元素
-    const speakButtons = document.querySelectorAll('.speak-button')
-    const clearButton = document.querySelector('.clear-button')
-    speakButtons.forEach(button => (button as HTMLElement).style.display = 'none')
-    if (clearButton) (clearButton as HTMLElement).style.display = 'none'  // 修复这里的括号
-
-    // 临时修改样式以优化导出效果
-    if (leftContent) {
-      leftContent.style.height = 'auto'
-      leftContent.style.maxHeight = 'none'
-      leftContent.style.overflow = 'visible'
-      leftContent.style.fontSize = '14px'
-      leftContent.style.lineHeight = '1.6'
-      leftContent.style.padding = '20px'
-    }
-    if (rightContent) {
-      rightContent.style.height = 'auto'
-      rightContent.style.maxHeight = 'none'
-      rightContent.style.overflow = 'visible'
-      rightContent.style.fontSize = '14px'
-      rightContent.style.padding = '20px'
-    }
-
-    // 临时修改容器样式
-    content.style.height = 'auto'
-    content.style.maxHeight = 'none'
-    content.style.overflow = 'visible'
-    content.style.backgroundColor = '#FFFFFF'
-
-    const canvas = await html2canvas(content, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#FFFFFF',
-      height: content.scrollHeight,
-      windowHeight: content.scrollHeight,
-      onclone: (clonedDoc) => {
-        const clonedContent = clonedDoc.getElementById('exportContent')
-        if (clonedContent) {
-          clonedContent.style.height = 'auto'
-          clonedContent.style.maxHeight = 'none'
-          clonedContent.style.overflow = 'visible'
-        }
+      // 保存原始滚动位置和样式
+      const leftContent = content.querySelector('.left-content-scroll') as HTMLElement
+      const rightContent = content.querySelector('.right-content-scroll') as HTMLElement
+      const originalLeftScroll = leftContent?.scrollTop
+      const originalRightScroll = rightContent?.scrollTop
+      const originalStyles = {
+        left: leftContent?.style.cssText,
+        right: rightContent?.style.cssText,
+        content: content.style.cssText
       }
-    })
 
-    const imgData = canvas.toDataURL('image/png')
-    const imgWidth = 842 // A4 宽度，单位是 pt
-    const pageHeight = 595 // A4 高度
-    const imgHeight = canvas.height * imgWidth / canvas.width
+      // 临时隐藏不需要的元素
+      const speakButtons = document.querySelectorAll('.speak-button')
+      const clearButton = document.querySelector('.clear-button')
+      speakButtons.forEach(button => (button as HTMLElement).style.display = 'none')
+      if (clearButton) (clearButton as HTMLElement).style.display = 'none'
 
-    const pdf = new jsPDF({
-      orientation: 'landscape',
-      unit: 'pt',
-      format: 'a4'
-    })
+      // 临时修改样式以优化导出效果
+      if (leftContent) {
+        leftContent.style.height = 'auto'
+        leftContent.style.maxHeight = 'none'
+        leftContent.style.overflow = 'visible'
+        leftContent.style.fontSize = '14px'
+        leftContent.style.lineHeight = '1.6'
+        leftContent.style.padding = '20px'
+      }
+      if (rightContent) {
+        rightContent.style.height = 'auto'
+        rightContent.style.maxHeight = 'none'
+        rightContent.style.overflow = 'visible'
+        rightContent.style.fontSize = '14px'
+        rightContent.style.padding = '20px'
+      }
 
-    // 添加多页
-    let heightLeft = imgHeight
-    let position = 0
-    let page = 1
+      // 临时修改容器样式
+      content.style.height = 'auto'
+      content.style.maxHeight = 'none'
+      content.style.overflow = 'visible'
+      content.style.backgroundColor = '#FFFFFF'
 
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-    heightLeft -= pageHeight
+      const canvas = await html2canvas(content, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#FFFFFF',
+        height: content.scrollHeight,
+        windowHeight: content.scrollHeight,
+        onclone: (clonedDoc) => {
+          const clonedContent = clonedDoc.getElementById('exportContent')
+          if (clonedContent) {
+            clonedContent.style.height = 'auto'
+            clonedContent.style.maxHeight = 'none'
+            clonedContent.style.overflow = 'visible'
+          }
+        }
+      })
 
-    while (heightLeft >= 0) {
-      position = -pageHeight * page
-      pdf.addPage()
+      const imgData = canvas.toDataURL('image/png')
+      const imgWidth = 842 // A4 宽度，单位是 pt
+      const pageHeight = 595 // A4 高度
+      const imgHeight = canvas.height * imgWidth / canvas.width
+
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'pt',
+        format: 'a4'
+      })
+
+      // 添加多页
+      let heightLeft = imgHeight
+      let position = 0
+      let page = 1
+
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
       heightLeft -= pageHeight
-      page++
+
+      while (heightLeft >= 0) {
+        position = -pageHeight * page
+        pdf.addPage()
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+        page++
+      }
+
+      pdf.save('学习笔记.pdf')
+
+      // 恢复原始样式和滚动位置
+      if (leftContent) {
+        leftContent.style.cssText = originalStyles.left || ''
+        leftContent.scrollTop = originalLeftScroll || 0
+      }
+      if (rightContent) {
+        rightContent.style.cssText = originalStyles.right || ''
+        rightContent.scrollTop = originalRightScroll || 0
+      }
+      content.style.cssText = originalStyles.content || ''
+
+      // 恢复隐藏的元素
+      speakButtons.forEach(button => (button as HTMLElement).style.display = '')
+      if (clearButton) (clearButton as HTMLElement).style.display = ''
+
+    } catch (error) {
+      console.error('PDF导出失败:', error)
     }
-
-    pdf.save('学习笔记.pdf')
-
-    // 恢复原始样式和滚动位置
-    if (leftContent) {
-      leftContent.style.cssText = originalStyles.left || ''
-      leftContent.scrollTop = originalLeftScroll || 0
-    }
-    if (rightContent) {
-      rightContent.style.cssText = originalStyles.right || ''
-      rightContent.scrollTop = originalRightScroll || 0
-    }
-    content.style.cssText = originalStyles.content || ''
-
-    // 恢复隐藏的元素
-    speakButtons.forEach(button => (button as HTMLElement).style.display = '')
-    if (clearButton) (clearButton as HTMLElement).style.display = ''
-
-  } catch (error) {
-    console.error('PDF导出失败:', error)
   }
-}
+
   return (
     <div className="flex h-screen bg-[#FFFFFF]">
       {/* 导出按钮 */}
