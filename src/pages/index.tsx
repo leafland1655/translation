@@ -70,7 +70,7 @@ export default function Home() {
 // 获取有道词典翻译
 const getYoudaoTranslation = async (text: string, from: string): Promise<TranslationResult> => {
   try {
-    console.log('开始翻译:', { text, from }) // 添加日志
+    console.log('开始翻译:', { text, from })
 
     const response = await fetch('/api/translate', {
       method: 'POST',
@@ -83,12 +83,14 @@ const getYoudaoTranslation = async (text: string, from: string): Promise<Transla
       }),
     })
     
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-    
     const data = await response.json()
-    console.log('翻译结果:', data) // 添加日志
+    
+    if (!response.ok) {
+      console.error('翻译错误:', data)
+      throw new Error(data.error || `翻译失败: ${response.status}`)
+    }
+
+    console.log('翻译结果:', data)
     return data
   } catch (error) {
     console.error('翻译请求失败:', error)
